@@ -82,11 +82,16 @@ test1
 
 
 ## USE PACKAGE
-population.network = make_kinship_network(make_relation_df(test1, parents.to.use = "mother.only"))
+population.network = 
+make_kinship_network(make_relation_df(test1, parents.to.use = "mother.only")) # make a network of the whole population 
 #note the parents.to.use term. Can be "mothers.only" =  maternal relatendess, "fathers.only" = paternal relateness or "all.avalaible" = both 
 test1
 
-get_nth_degree_relatives(network = population.network, from.id = test1$id[5], r.degree = 2)
+get_nth_degree_relatives(
+  from.id = test1$id[5], # The ego or indivdiual whose relatives you want to find
+  network = population.network, # The population network generated above (note the maternal/paternal option is used to generate this network)
+  r.degree = 2 # relatedness degree
+  )
 
 ego.network = get_nth_degree_ego_network(network = population.network,
                                          ego.id = test1$id[5],
