@@ -58,7 +58,7 @@ This is just a simple example of how to use this package to get all of an indivi
 in the nth degree to a given individual (the "ego.id"" or "from.id")
 
 ```r
-##USE PACKAGE
+##Generate data. as above
 rm(list = ls())
 test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
                     mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
