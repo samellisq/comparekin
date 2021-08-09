@@ -1,0 +1,337 @@
+require(comparekin)
+## Updates the Documentation (ie runs roxygen 2) Must be run before any changes to doumentation will take effect
+devtools::document() this needs to be run in the console to update the docuemnation
+## Updates the Documentation (ie runs roxygen 2) Must be run before any changes to doumentation will take effect
+devtools::document()# this needs to be run in the console to update the docuemnation
+usethis::use_package("igraph")
+usethis::use_package("dplyr")
+usethis::use_package("kinship2")
+?igraph::V
+##Load the package
+devtools::load_all()
+?make_relation.df
+?make_relation_df
+rm(list = ls())
+require(tidyverse)
+require(brms)
+modelling.wd = "C:/Users/se308/Google Drive/Work/Comparative/Projects/Exploring Kinship Dynamics/R Projects/Kinship Dynamics Model"
+project.wd = "C:/Users/se308/Google Drive/Work/Comparative/Projects/Sex Differences in Kinship Dynamics/Sex and Kinship Dynamics"
+output.wd = "C:/Users/se308/Google Drive/Work/Comparative/Projects/Sex Differences in Kinship Dynamics/Sex and Kinship Dynamics/examples/Output Data"
+setwd(modelling.wd)
+source("KinDym model v5.R")
+setwd(project.wd)
+#############################################################################
+#Population data
+############################################################################
+# Data sorting
+kw.data = read_csv("Whale_Attributes_Master 2019-07-11.csv")
+names(kw.data)[2] = "population"
+names(kw.data)[3] = "sex"
+kw.data = filter(kw.data, population == "S")
+kw.data$sex = ifelse(kw.data$sex == 0, "F",
+ifelse(kw.data$sex == 1, "M",
+"UNK"))
+kw.data$mother = ifelse(kw.data$mo_certainty ==3,  "UNK", kw.data$mother)
+kw.data
+kw.data.in.range = filter(kw.data, !(yob <1976 & yod< 1976))
+kw.data.in.range = filter(kw.data.in.range, yob<=2018)
+all.years = seq(1976, 2018, 1)
+all.whales = kw.data.in.range$id
+whale_by_year = matrix(0, ncol = length(all.years), nrow = length(all.whales),
+dimnames = list(all.whales,all.years))
+for(i in 1:nrow(whale_by_year)){
+whale.data = filter(kw.data.in.range, id == rownames(whale_by_year)[i])
+all.whaleyears = rep.int(0, length(all.years))
+firstyear = ifelse(whale.data$yob<1976, 1976, whale.data$yob)
+firstyear = ifelse(firstyear > 2018, 2018, firstyear)
+firstyear = firstyear - 1975
+lastyear = ifelse(is.na(whale.data$yod) | whale.data$yod >2018, 2018, whale.data$yod) -1975
+whale_by_year[i, firstyear:lastyear] = 1
+}
+kw.data.by.year = list()
+for(i in 1:ncol(whale_by_year)){
+whales.present = whale_by_year[,i ]
+whales.present = names(whales.present)[whales.present == 1]
+kw.data.by.year[[i]] =
+kw.data %>%
+filter(id %in% whales.present) %>%
+mutate(year = as.numeric(colnames(whale_by_year)[i])) %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+select(year, id, sex, yob,yod, age, pod)
+}
+for(i in 1:length(kw.data.by.year)){
+pod.by.year =
+kw.data.by.year[[i]] %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+group_by(year, pod) %>%
+summarise(n.in.pod = n())
+kw.data.by.year[[i]] =
+left_join(kw.data.by.year[[i]], pod.by.year)
+}
+kw.r.matrix = get__pairwise_relatednesses_matrix(ids = "ALL",
+population.data = kw.data,
+r.degree = 2,
+kinship.network = NULL,
+r.type = "coef.of.relationship" )
+##Load the package
+devtools::load_all()
+setwd("C:/Users/se308/Google Drive/Work/Methods/Created Packages/Comparing Kinship/comparekin")
+##Load the package
+devtools::load_all()
+kw.r.matrix = get__pairwise_relatednesses_matrix(ids = "ALL",
+population.data = kw.data,
+r.degree = 2,
+kinship.network = NULL,
+r.type = "coef.of.relationship" )
+kw.r.matrix
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+r.output[[i]] = get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+kw.data.by.year = lapply(kw.data.by.year, get_all_kw_local_relatedness)
+kw.data.by.year = as_tibble(bind_rows(kw.data.by.year))
+kw.data.by.year
+kw.data.by.year$local.r.adj = ifelse(kw.data.by.year$local.r == 0, 0.0000000001, (kw.data.by.year$local.r))
+rlang::last_error()
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+print(pod.members)
+r.output[[i]] = get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+get_all_kw_local_relatedness(kw.data.by.year[[1]])
+kw.data.by.year[[1]]
+##################################################################################
+#Sort by group
+##################################################################################
+kw.data.in.range = filter(kw.data, !(yob <1976 & yod< 1976))
+kw.data.in.range = filter(kw.data.in.range, yob<=2018)
+all.years = seq(1976, 2018, 1)
+all.whales = kw.data.in.range$id
+whale_by_year = matrix(0, ncol = length(all.years), nrow = length(all.whales),
+dimnames = list(all.whales,all.years))
+for(i in 1:nrow(whale_by_year)){
+whale.data = filter(kw.data.in.range, id == rownames(whale_by_year)[i])
+all.whaleyears = rep.int(0, length(all.years))
+firstyear = ifelse(whale.data$yob<1976, 1976, whale.data$yob)
+firstyear = ifelse(firstyear > 2018, 2018, firstyear)
+firstyear = firstyear - 1975
+lastyear = ifelse(is.na(whale.data$yod) | whale.data$yod >2018, 2018, whale.data$yod) -1975
+whale_by_year[i, firstyear:lastyear] = 1
+}
+kw.data.by.year = list()
+for(i in 1:ncol(whale_by_year)){
+whales.present = whale_by_year[,i ]
+whales.present = names(whales.present)[whales.present == 1]
+kw.data.by.year[[i]] =
+kw.data %>%
+filter(id %in% whales.present) %>%
+mutate(year = as.numeric(colnames(whale_by_year)[i])) %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+select(year, id, sex, yob,yod, age, pod)
+}
+for(i in 1:length(kw.data.by.year)){
+pod.by.year =
+kw.data.by.year[[i]] %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+group_by(year, pod) %>%
+summarise(n.in.pod = n())
+kw.data.by.year[[i]] =
+left_join(kw.data.by.year[[i]], pod.by.year)
+}
+# Data sorting
+kw.data = read_csv("Whale_Attributes_Master 2019-07-11.csv")
+names(kw.data)[2] = "population"
+names(kw.data)[3] = "sex"
+kw.data = filter(kw.data, population == "S")
+kw.data$sex = ifelse(kw.data$sex == 0, "F",
+ifelse(kw.data$sex == 1, "M",
+"UNK"))
+kw.data$mother = ifelse(kw.data$mo_certainty ==3,  "UNK", kw.data$mother)
+kw.data
+##################################################################################
+#Sort by group
+##################################################################################
+kw.data.in.range = filter(kw.data, !(yob <1976 & yod< 1976))
+kw.data.in.range = filter(kw.data.in.range, yob<=2018)
+all.years = seq(1976, 2018, 1)
+all.whales = kw.data.in.range$id
+whale_by_year = matrix(0, ncol = length(all.years), nrow = length(all.whales),
+dimnames = list(all.whales,all.years))
+for(i in 1:nrow(whale_by_year)){
+whale.data = filter(kw.data.in.range, id == rownames(whale_by_year)[i])
+all.whaleyears = rep.int(0, length(all.years))
+firstyear = ifelse(whale.data$yob<1976, 1976, whale.data$yob)
+firstyear = ifelse(firstyear > 2018, 2018, firstyear)
+firstyear = firstyear - 1975
+lastyear = ifelse(is.na(whale.data$yod) | whale.data$yod >2018, 2018, whale.data$yod) -1975
+whale_by_year[i, firstyear:lastyear] = 1
+}
+kw.data.by.year = list()
+for(i in 1:ncol(whale_by_year)){
+whales.present = whale_by_year[,i ]
+whales.present = names(whales.present)[whales.present == 1]
+kw.data.by.year[[i]] =
+kw.data %>%
+filter(id %in% whales.present) %>%
+mutate(year = as.numeric(colnames(whale_by_year)[i])) %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+select(year, id, sex, yob,yod, age, pod)
+}
+for(i in 1:length(kw.data.by.year)){
+pod.by.year =
+kw.data.by.year[[i]] %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+group_by(year, pod) %>%
+summarise(n.in.pod = n())
+kw.data.by.year[[i]] =
+left_join(kw.data.by.year[[i]], pod.by.year)
+}
+setwd(project.wd)
+#############################################################################
+#Population data
+############################################################################
+# Data sorting
+kw.data = read_csv("Whale_Attributes_Master 2019-07-11.csv")
+names(kw.data)[2] = "population"
+names(kw.data)[3] = "sex"
+kw.data = filter(kw.data, population == "S")
+kw.data$sex = ifelse(kw.data$sex == 0, "F",
+ifelse(kw.data$sex == 1, "M",
+"UNK"))
+kw.data$mother = ifelse(kw.data$mo_certainty ==3,  "UNK", kw.data$mother)
+kw.data
+kw.data.in.range = filter(kw.data, !(yob <1976 & yod< 1976))
+kw.data.in.range = filter(kw.data.in.range, yob<=2018)
+all.years = seq(1976, 2018, 1)
+all.whales = kw.data.in.range$id
+whale_by_year = matrix(0, ncol = length(all.years), nrow = length(all.whales),
+dimnames = list(all.whales,all.years))
+for(i in 1:nrow(whale_by_year)){
+whale.data = filter(kw.data.in.range, id == rownames(whale_by_year)[i])
+all.whaleyears = rep.int(0, length(all.years))
+firstyear = ifelse(whale.data$yob<1976, 1976, whale.data$yob)
+firstyear = ifelse(firstyear > 2018, 2018, firstyear)
+firstyear = firstyear - 1975
+lastyear = ifelse(is.na(whale.data$yod) | whale.data$yod >2018, 2018, whale.data$yod) -1975
+whale_by_year[i, firstyear:lastyear] = 1
+}
+kw.data.by.year = list()
+for(i in 1:ncol(whale_by_year)){
+whales.present = whale_by_year[,i ]
+whales.present = names(whales.present)[whales.present == 1]
+kw.data.by.year[[i]] =
+kw.data %>%
+filter(id %in% whales.present) %>%
+mutate(year = as.numeric(colnames(whale_by_year)[i])) %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+select(year, id, sex, yob,yod, age, pod)
+}
+for(i in 1:length(kw.data.by.year)){
+pod.by.year =
+kw.data.by.year[[i]] %>%
+mutate(age = year - yob, pod = str_split(id, "", simplify = TRUE)[,1]) %>%
+group_by(year, pod) %>%
+summarise(n.in.pod = n())
+kw.data.by.year[[i]] =
+left_join(kw.data.by.year[[i]], pod.by.year)
+}
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+print(pod.members)
+r.output[[i]] = get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+kw.data.by.year = lapply(kw.data.by.year, get_all_kw_local_relatedness)
+kw.data.by.year[[1]]
+get_all_kw_local_relatedness(kw.data.by.year[[1]])
+?get_local_relatedness
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+print(pod.members)
+r.output[[i]] = get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+get_all_kw_local_relatedness(kw.data.by.year[[1]])
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+print(focal)
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+return(pod.members)
+r.output[[i]] = get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+a = get_all_kw_local_relatedness(kw.data.by.year[[1]])
+a
+comparekin::get_local_relatedness()
+get_all_kw_local_relatedness = function(data.by.year){
+R= nrow(data.by.year)
+r.output = list()
+for(i in 1:R){
+focal = data.by.year$id[i]
+print(focal)
+pod.members = filter(data.by.year, pod == data.by.year$pod[i] & id != focal)$id
+r.output[[i]] = comparekin::get_local_relatedness(id = focal, kinship.matrix = kw.r.matrix, group.members = pod.members)
+}
+r.output = bind_rows(r.output)
+return(data.frame(data.by.year, r.output))
+}
+kw.data.by.year = lapply(kw.data.by.year, get_all_kw_local_relatedness)
+kw.data.by.year = as_tibble(bind_rows(kw.data.by.year))
+kw.data.by.year
+##Install the package to use elsewhere
+devtools::install()
+setwd("C:/Users/se308/Google Drive/Work/Methods/Created Packages/Comparing Kinship/comparekin")
+##Install the package to use elsewhere
+devtools::install()
+.Last.error.trace
+devtools::install()
+install.packages("glue")
+##Install the package to use elsewhere
+devtools::install()
+install.packages("Rcpp")
+install.packages("tibble")
+install.packages("BH")
+##Install the package to use elsewhere
+devtools::install()
+remove.packages("BH")
+install.packages("BH")
+remove.packages("BH")
+devtools::install()
+devtools::install()
+.libPaths("C:/Users/se308/R Packages II")
+##Install the package to use elsewhere
+devtools::install()
+install.packages("devtools")
+##Install the package to use elsewhere
+devtools::install()
