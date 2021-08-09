@@ -231,7 +231,7 @@ plot_ego_network = function(ego_network, census.data = NULL){
   }
 
   if(is.null(census.data)){
-    egoplot = igraph::plot(ego_network,
+    egoplot = igraph::plot.igraph(ego_network,
                    vertex.color = igraph::V(ego_network)$colour,
                    vertex.size = 5,
                    vertex.label.color = igraph::V(ego_network)$label.colour
@@ -240,7 +240,7 @@ plot_ego_network = function(ego_network, census.data = NULL){
     igraph::V(ego_network)$shape = rep.int("crectangle", igraph::vcount(ego_network))
     igraph::V(ego_network)$shape = ifelse(igraph::V(ego_network)$sex == "M" & !is.na(igraph::V(ego_network)$sex), "square", igraph::V(ego_network)$shape)
     igraph::V(ego_network)$shape = ifelse(igraph::V(ego_network)$sex == "F" & !is.na(igraph::V(ego_network)$sex), "circle", igraph::V(ego_network)$shape)
-    egoplot = igraph::plot(ego_network,
+    egoplot = igraph::plot.igraph(ego_network,
                    vertex.color = igraph::V(ego_network)$colour,
                    vertex.size = 5,
                    vertex.label.color = igraph::V(ego_network)$label.colour
