@@ -103,6 +103,7 @@ is_complete = function(ego.network, focal, r.degree, n.lineages = 2){
 }
 
 
+
 #' Calculate pairwise relatedness
 
 calculate_pairwise_relatendess = function(from.id,
