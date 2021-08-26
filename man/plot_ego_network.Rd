@@ -6,6 +6,45 @@
 \usage{
 plot_ego_network(ego_network, census.data = NULL)
 }
+\arguments{
+\item{census.data}{Option to include a population.data dataframe which if
+included will add more features to the plotted graph.}
+
+\item{ego_network.}{igraph network object produced by the
+\code{get_nth_degree_ego_network} function.}
+}
+\value{
+A network plot. Colour representing lineage: orange = lineage A, blue
+= lineage B, purple = both lineages, black = the ego. Shape represents sex,
+circle = female, square = male.
+}
 \description{
-Plot an ego-pedigree
+\code{plot_ego_network} plots the ego network produced by the
+\code{get_nth_degree_ego_network} function
+}
+\examples{
+#Example data taken from kinship2::kinship()
+test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+                   mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+                   dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+                   sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#some renaming
+names(test1)[2] = "mother"
+names(test1)[3] = "father"
+test1$sex = ifelse(test1$sex ==1, "F", "M")
+test1$id = as.character(test1$id)
+test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+test1
+
+r.df = make_relation_df(test1)
+net = make_kinship_network(r.df)
+
+ego.network = get_nth_degree_ego_network(network = population.network,
+ego.id = test1$id[5],
+r.degree = 2,
+seperate.lineages = TRUE)
+
+plot_ego_network(ego.network, census.data = test1)
+
 }

@@ -11,6 +11,56 @@ get_nth_degree_ego_network(
   seperate.lineages = FALSE
 )
 }
+\arguments{
+\item{network}{A kinship-network derived from the
+\code{\link{make_kinship_network}} function. The type of network input -
+biparental, maternal only, paternal only - defines which side(s) of relatives
+are found.}
+
+\item{ego.id}{Character. id of the ego for whom the ego network will be
+drawn.}
+
+\item{r.degree}{degree of relationship to which to calculate relatedness (
+\url{https://en.wikipedia.org/wiki/Coefficient_of_relationship}. Degree is
+calculated separately for each lineage i.e. half-sisters are considered
+equivalent to full-sisters in count (but not in relatedness calculation).}
+
+\item{seperate.lineages}{If TRUE each node in the ego network is given a
+property \code{lineage} labeling each node as part of the lineage A, B or
+both. Where A and B are paternal and maternal lineages (order determined by
+the data).}
+}
+\value{
+igraph network object showing showing all relatives to the
+\code{r.degree} of the \code{ego.id}.
+}
 \description{
-Create ego-pedigree
+\code{get_nth_degree_ego_network} trims the full population kinship-network
+down to only the ego network for a given id up to the nth relatedness degree.
+}
+\examples{
+#Example data taken from kinship2::kinship()
+test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+                   mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+                   dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+                   sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#some renaming
+names(test1)[2] = "mother"
+names(test1)[3] = "father"
+test1$sex = ifelse(test1$sex ==1, "F", "M")
+test1$id = as.character(test1$id)
+test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+test1
+
+r.df = make_relation_df(test1)
+net = make_kinship_network(r.df)
+
+ego.network = get_nth_degree_ego_network(network = population.network,
+ego.id = test1$id[5],
+r.degree = 2,
+seperate.lineages = TRUE)
+
+plot_ego_network(ego.network, census.data = test1)
+
 }

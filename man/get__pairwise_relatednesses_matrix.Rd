@@ -2,7 +2,7 @@
 % Please edit documentation in R/relatedness functions.R
 \name{get__pairwise_relatednesses_matrix}
 \alias{get__pairwise_relatednesses_matrix}
-\title{Get pairwise relatedness between multiple individuals}
+\title{Calculates a matrix of pairwise relatedness's}
 \usage{
 get__pairwise_relatednesses_matrix(
   ids = "ALL",
@@ -13,6 +13,72 @@ get__pairwise_relatednesses_matrix(
   r.type = "coef.of.relationship"
 )
 }
+\arguments{
+\item{ids}{Vector of ids to include in returned matrix. Default is
+\code{"ALL"} which will calculate for all ids in the \code{population.data}}
+
+\item{population.data}{data frame of all known ids in the population (not just
+\code{ids}). Data frame must columns: \code{id} [character],
+\code{mother} [character], \code{father} [character] & \code{sex} [character]
+. No columns can contains \code{NA}. Unknown \code{mother} or \code{father},
+ids should be labeled as \code{UNK}. \code{sex} must be \code{M}, \code{F},
+\code{male}, \code{female} or \code{UNK}.}
+
+\item{parents.to.use}{Character of either \code{"all.available"} (default),
+\code{"mother.only"} or \code{"father.only"}, which calculate biparental,
+maternal or paternal relatedness respectively.}
+
+\item{r.degree}{degree of relationship to which to calculate relatedness (
+\url{https://en.wikipedia.org/wiki/Coefficient_of_relationship}. Degree is
+calculated separately for each lineage i.e. half-sisters are considered
+equivalent to full-sisters in count (but not in relatedness calculation).}
+
+\item{kinship.network}{Either \code{NULL} [default] or the output from
+\code{\link{make_kinship_network}} function. Using the function output will usually
+be faster, especially with large datasets.}
+
+\item{r.type}{Either \code{"coef.of.relationship"} (default) or
+\code{"kinship.coef"}. Defines the type of relatedness returned.}
+}
+\value{
+This function will output a square matrix of \code{length(ids)} x
+\code{length(ids)}. With row and columns named for \code{ids}. When \code{ids}
+is \code{"ALL"}, \code{ids == population.data$id}.
+}
 \description{
-Get pairwise relatedness between multiple individuals
+\code{get__pairwise_relatednesses_matrix} calculates and returns a matrix of
+pairwise relatedness's
+}
+\details{
+This is a function to calculate a matrix of pairwise relatedness between all
+ids supplied by the \code{ids} term, limited to a pedigree depth of
+\code{r.degree} and returning \code{NA} if the pairwise relatedness is
+unknown.
+}
+\examples{
+#Example data taken from kinship2::kinship()
+test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+                   mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+                   dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+                   sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#some renaming
+names(test1)[2] = "mother"
+names(test1)[3] = "father"
+test1$sex = ifelse(test1$sex ==1, "F", "M")
+test1$id = as.character(test1$id)
+test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+test1
+r.mat =
+ get__pairwise_relatednesses_matrix(
+   ids = test1$id ,
+   population.data = test1,
+   parents.to.use = "all.avaliable",
+   r.degree = 2,
+   kinship.network = NULL,
+   r.type = "coef.of.relationship"
+ )
+r.mat
+
+
 }

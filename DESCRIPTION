@@ -1,16 +1,20 @@
 Package: comparekin
 Type: Package
-Title: What the Package Does (Title Case)
-Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Title: Calculating relatedness in biological data
+Year: 2021
+Date: 2021-08-26
+Version: 0.2.0
+Authors@R: c(person("Samuel", "Ellis", email = "samellisq@gmail.com", role = c("aut", "cre")))
+Description: A package to calculate pairwise relatedness while controlling for pedigree depth and identifying unknown relatedness's from pedigree data. 
+License: GPL-3
 Encoding: UTF-8
 LazyData: true
-RoxygenNote: 7.1.0
+RoxygenNote: 7.1.1
 Imports: 
     igraph,
     dplyr,
-    kinship2
+    kinship2,
+    graphics
+Suggests: 
+    testthat (>= 3.0.0)
+Config/testthat/edition: 3

@@ -2,10 +2,53 @@
 % Please edit documentation in R/ego network functions.R
 \name{get_nth_degree_relatives}
 \alias{get_nth_degree_relatives}
-\title{Find relatives from a pedigree-network}
+\title{Find all nth degree relatives from a pedigree-network}
 \usage{
 get_nth_degree_relatives(network, from.id, r.degree)
 }
+\arguments{
+\item{network}{A kinship-network derived from the
+\code{\link{make_kinship_network}} function. The type of network input -
+biparental, maternal only, paternal only - defines which side(s) of relatives
+are found.}
+
+\item{from.id}{Character. The id of the individual for whom nth degree
+relatives will be found}
+
+\item{r.degree}{degree of relationship to which to calculate relatedness (
+\url{https://en.wikipedia.org/wiki/Coefficient_of_relationship}. Degree is
+calculated separately for each lineage i.e. half-sisters are considered
+equivalent to full-sisters in count (but not in relatedness calculation).}
+}
+\value{
+Returns a character vector of the ids of all relatives up to the
+\code{r.degree} degree of the \code{from.id}. For example, where
+\code{r.degree = 2} this will return a vector of all 1st and 2nd degree
+maternal and paternal relatives (if they are both present in the network).
+Vector also includes \code{from.id}.
+}
 \description{
-Find relatives from a pedigree-network
+\code{get_nth_degree_relatives} derives the ids of all relatives within the
+nth degree for a given individual from a population kinship-network.
+}
+\examples{
+#Example data taken from kinship2::kinship()
+test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+                   mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+                   dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+                   sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#some renaming
+names(test1)[2] = "mother"
+names(test1)[3] = "father"
+test1$sex = ifelse(test1$sex ==1, "F", "M")
+test1$id = as.character(test1$id)
+test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+test1
+
+population.network = make_kinship_network(make_relation_df(test1))
+plot(population.network)
+get_nth_degree_relatives(network = population.network, from.id = test1$id[5],
+r.degree = 2)
+
 }

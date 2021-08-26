@@ -1,6 +1,7 @@
 #' Get pairwise relatedness from an ego-pedigree
-
 get_relatedness = function(from.id, to.id, fromid.ego.network, population.data, r.type = "coef.of.relationship"){
+
+  check_population_df(population.data)
 
   population.data$id = as.character(population.data$id)
   population.data$sex = as.character(population.data$sex)
@@ -60,7 +61,7 @@ get_relatedness = function(from.id, to.id, fromid.ego.network, population.data, 
 
 
 #' Tests if an ego network is complete
-
+#'
 is_complete = function(ego.network, focal, r.degree, n.lineages = 2){
   if(!(n.lineages %in% c(1,2))){
     stop("Too many or too few lineages. Must be 1 or 2.")
@@ -105,7 +106,7 @@ is_complete = function(ego.network, focal, r.degree, n.lineages = 2){
 
 
 #' Calculate pairwise relatedness
-
+#'
 calculate_pairwise_relatendess = function(from.id,
                                           to.id,
                                           population.data,
@@ -177,10 +178,10 @@ calculate_pairwise_relatendess = function(from.id,
     toid.complete = is_complete(toid.ego.network, focal = to.id, r.degree = r.degree, n.lineages = n.lineages)
 
     if(plot.ego.networks == TRUE){
-      par(mfrow = c(2,1))
+      graphics::par(mfrow = c(2,1))
       plot_ego_network(fromid.ego.network, population.data)
       plot_ego_network(toid.ego.network, population.data)
-      par(mfrow = c(1,1))
+      graphics::par(mfrow = c(1,1))
     }
 
 
@@ -200,9 +201,73 @@ calculate_pairwise_relatendess = function(from.id,
 }
 
 
-#' Get pairwise relatedness between multiple individuals
+#' Calculates a matrix of pairwise relatedness's
+#'
+#' \code{get__pairwise_relatednesses_matrix} calculates and returns a matrix of
+#' pairwise relatedness's
+#'
+#' This is a function to calculate a matrix of pairwise relatedness between all
+#' ids supplied by the \code{ids} term, limited to a pedigree depth of
+#' \code{r.degree} and returning \code{NA} if the pairwise relatedness is
+#' unknown.
+#'
+#'@param ids Vector of ids to include in returned matrix. Default is
+#'\code{"ALL"} which will calculate for all ids in the \code{population.data}
+#'@param population.data data frame of all known ids in the population (not just
+#' \code{ids}). Data frame must columns: \code{id} [character],
+#' \code{mother} [character], \code{father} [character] & \code{sex} [character]
+#' . No columns can contains \code{NA}. Unknown \code{mother} or \code{father},
+#' ids should be labeled as \code{UNK}. \code{sex} must be \code{M}, \code{F},
+#' \code{male}, \code{female} or \code{UNK}.
+#' @param parents.to.use Character of either \code{"all.available"} (default),
+#' \code{"mother.only"} or \code{"father.only"}, which calculate biparental,
+#' maternal or paternal relatedness respectively.
+#' @param r.degree degree of relationship to which to calculate relatedness (
+#' \url{https://en.wikipedia.org/wiki/Coefficient_of_relationship}. Degree is
+#' calculated separately for each lineage i.e. half-sisters are considered
+#' equivalent to full-sisters in count (but not in relatedness calculation).
+#' @param kinship.network Either \code{NULL} [default] or the output from
+#' \code{\link{make_kinship_network}} function. Using the function output will usually
+#' be faster, especially with large datasets.
+#' @param r.type Either \code{"coef.of.relationship"} (default) or
+#' \code{"kinship.coef"}. Defines the type of relatedness returned.
+#'
+#'@return
+#'This function will output a square matrix of \code{length(ids)} x
+#'\code{length(ids)}. With row and columns named for \code{ids}. When \code{ids}
+#'is \code{"ALL"}, \code{ids == population.data$id}.
+#'
+#'@examples
+#'#Example data taken from kinship2::kinship()
+#'test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+#'                    mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+#'                    dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+#'                    sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#'#some renaming
+#'names(test1)[2] = "mother"
+#'names(test1)[3] = "father"
+#'test1$sex = ifelse(test1$sex ==1, "F", "M")
 
-get__pairwise_relatednesses_matrix = function(ids = "ALL",# the ids of the individuals to calcualte pairwise relatedness between
+#'test1$id = as.character(test1$id)
+#'test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+#'test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+#'test1
+
+#'r.mat =
+#'  get__pairwise_relatednesses_matrix(
+#'    ids = test1$id ,
+#'    population.data = test1,
+#'    parents.to.use = "all.avaliable",
+#'    r.degree = 2,
+#'    kinship.network = NULL,
+#'    r.type = "coef.of.relationship"
+#'  )
+#'r.mat
+#'
+#'
+#' @export
+get__pairwise_relatednesses_matrix = function(
+                                          ids = "ALL",# the ids of the individuals to calculate pairwise relatedness between
                                           population.data,
                                           parents.to.use = "all.avaliable",
                                           r.degree = 2,

@@ -6,6 +6,42 @@
 \usage{
 make_kinship_network(relation.data.frame)
 }
+\arguments{
+\item{relation.data.frame}{a data frame produced by the
+\code{\link{make_relation_df}} function.}
+}
+\value{
+An igraph network object with nodes as all ids in the population
+(including parents) and directed edges representing parent --> offspring
+relationships.
+}
 \description{
-Convert pedigree to network
+\code{make_kinship_network} Creates a kinship network from a pedigree data
+frame created by the function \code{\link{make_relation_df}}.
+}
+\details{
+The object returned is the population pedigree represented as a network.
+This network underlies much of the subsequent relatedness analysis, and is
+used to both limit the depth of the pedigree and find pairs where relatedness
+is unknown.
+}
+\examples{
+# Example data taken from kinship2::kinship()
+test1 <- data.frame(id  =c(1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14),
+                   mom =c(0, 0, 0, 0, 2, 2, 4, 4, 6,  2,  0,  0, 12, 13),
+                   dad =c(0, 0, 0, 0, 1, 1, 3, 3, 3,  7,  0,  0, 11, 10),
+                   sex =c(0, 1, 0, 1, 0, 1, 0, 1, 0,  0,  0,  1,  1,  1))
+#some renaming
+names(test1)[2] = "mother"
+names(test1)[3] = "father"
+test1$sex = ifelse(test1$sex ==1, "F", "M")
+test1$id = as.character(test1$id)
+test1$mother = ifelse(test1$mother!=0, as.character(test1$mother), "UNK")
+test1$father = ifelse(test1$father!=0, as.character(test1$father), "UNK")
+test1
+
+r.df = make_relation_df(test1)
+net = make_kinship_network(r.df)
+plot(net)
+
 }
